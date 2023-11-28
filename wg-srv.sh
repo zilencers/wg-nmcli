@@ -68,7 +68,7 @@ check_conn() {
    printf "Checking for existing connections ..."
    
    local con=$(nmcli connection show | grep -o $CONN_NAME)
-   [ $con ] && abnormal_exit "A NetworkManager connection already exists by that name: $CONN_NAME"
+   [[ $con ]] && abnormal_exit "A NetworkManager connection already exists by that name: $CONN_NAME"
    
    printf "Done\n"
 }
