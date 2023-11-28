@@ -90,14 +90,16 @@ parse_args() {
 }
 
 validate_args() {
-   [ -n $TUNNEL_IP ] && abnormal_exit "missing [-ip|--tunnel-ip] argument" usage
-   [ -n $TYPE ] && abnormal_exit "missing [-t|--type] argument" usage
-   [ -n $VIRT_IFNAME ] && VIRT_IFNAME="wg0"
-   [ -n $PORT ] && PORT=51820
-   [ -n $CONN_NAME ] && CONN_NAME=$VIRT_IFNAME"-"$TYPE
-
    TYPE=$(echo $TYPE | tr '[:upper:]' '[:lower:]')
    VIRT_IFNAME=$(echo $VIRT_IFNAME | tr '[:upper:]' '[:lower:]')
+   
+   if [ $ADD_PEER -eq 0 ]; then
+      [ -n $TUNNEL_IP ] && abnormal_exit "missing [-ip|--tunnel-ip] argument" usage
+      [ -n $TYPE ] && abnormal_exit "missing [-t|--type] argument" usage
+      [ -n $VIRT_IFNAME ] && VIRT_IFNAME="wg0"
+      [ -n $PORT ] && PORT=51820
+      [ -n $CONN_NAME ] && CONN_NAME=$VIRT_IFNAME"-"$TYPE
+   fi
 
    if [[ $ROUTE_ALL ]] && [[ $ALLOWED_IP ]]; then
       abnormal_exit "--route-all and --allowed-ip cannot be used together" usage
@@ -108,7 +110,7 @@ validate_args() {
    fi 
 
    if [ $ADD_PEER -eq 1 ]; then 
-      [ ! $PEER_IP ] && abnormal_exit "missing required argument --peer-ip" usage
+      [ ! $ALLOWED_IP ] && abnormal_exit "missing required argument --allowed-ip" usage
       [ ! $PEER_PUBKEY ] && abnormal_exit "missing required argument -pk|--peer-pubkey" usage
       [ ! $TYPE ] && abnormal_exit "missing required argument [ -t|--type]" usage
    fi
