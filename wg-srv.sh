@@ -64,6 +64,15 @@ parse_args() {
 #   [ -n $PEER_PUBKEY ] && abnormal_exit "missing required argument -pk|--peer-pubkey" usage
 #}
 
+check_conn() {
+   printf "Checking for existing connections ..."
+   
+   local con=$(nmcli connection show | grep -o $CONN_NAME)
+   [ $con ] && abnormal_exit "A NetworkManager connection already exists by that name: $CONN_NAME"
+   
+   printf "Done\n"
+}
+
 install_pkg() {
    printf "Installing wireguard ...\n"
    dnf -y install wireguard-tools
@@ -79,7 +88,7 @@ genkeys() {
 }
 
 create_connection() {
-    printf "Adding NetworkManager WireGuard connection profile ..."
+    printf "Adding NetworkManager WireGuard connection profile ...\n"
     nmcli connection add type wireguard con-name $CONN_NAME ifname $VIRT_IFNAME autoconnect no
     printf "Done\n"
 
@@ -107,7 +116,7 @@ create_connection() {
     nmcli connection modify $CONN_NAME autoconnect yes
     printf "Done\n"
    
-    printf "Reactivating the connection ..."
+    printf "Reactivating the connection ...\n"
     nmcli connection up $CONN_NAME
     printf "Done\n"
 }
@@ -138,7 +147,8 @@ main() {
       add_peer
       exit 0
    fi
-
+   
+   check_conn
    install_pkg
    genkeys
    create_connection
