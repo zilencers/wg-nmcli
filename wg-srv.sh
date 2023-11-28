@@ -80,19 +80,19 @@ genkeys() {
 
 create_connection() {
     printf "Adding NetworkManager WireGuard connection profile ..."
-#   nmcli connection add type wireguard con-name $CONN_NAME ifname $VIRT_IFNAME autoconnect no
+    nmcli connection add type wireguard con-name $CONN_NAME ifname $VIRT_IFNAME autoconnect no
     printf "Done\n"
 
     printf "Set the tunnel IPv4 address and subnet mask ..."
-#   nmcli connection modify $CONN_NAME ipv4.method manual ipv4.addresses $TUNNEL_IP
+    nmcli connection modify $CONN_NAME ipv4.method manual ipv4.addresses $TUNNEL_IP
     printf "Done\n"
 
     printf "Adding private key to the connection profile ..."
-#   nmcli connection modify $CONN_NAME wireguard.private-key "$PRIVATE_KEY"
+    nmcli connection modify $CONN_NAME wireguard.private-key "$PRIVATE_KEY"
     printf "Done\n"
 
     printf "Setting port for incoming WireGuard connections ..."
-#   nmcli connection modify $CONN_NAME wireguard.listen-port $PORT
+    nmcli connection modify $CONN_NAME wireguard.listen-port $PORT
     printf "Done\n"
 
     printf "Adding peer configuration ..."
@@ -100,15 +100,15 @@ create_connection() {
     [ -n $PEER_PUBKEY ] && printf "No peer key Skipping\n"
 
     printf "Reloading the connection profile ..."
-#   nmcli connection load /etc/NetworkManager/system-connections/$CONN_NAME.nmconnection
+    nmcli connection load /etc/NetworkManager/system-connections/$CONN_NAME.nmconnection
     printf "Done\n"
 
     printf "Configuring the connection to start automatically ..."
-#   nmcli connection modify $CONN_NAME autoconnect yes
+    nmcli connection modify $CONN_NAME autoconnect yes
     printf "Done\n"
    
     printf "Reactivating the connection ..."
-#   nmcli connection up $CONN_NAME
+    nmcli connection up $CONN_NAME
     printf "Done\n"
 }
 
@@ -139,8 +139,8 @@ main() {
       exit 0
    fi
 
-   #install_pkg
-   #genkeys
+   install_pkg
+   genkeys
    create_connection
 }
 
