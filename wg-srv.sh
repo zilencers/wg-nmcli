@@ -45,6 +45,10 @@ parse_args() {
 	    PORT=$2
 	    shift 2
 	    ;;
+	 --peer-ip)
+	    PEER_IP=$2
+	    shift 2
+	    ;;
 	 -pk|--peer-pubkey)
 	    PEER_PUBKEY=$2
 	    shift 2
@@ -60,9 +64,12 @@ parse_args() {
    done
 }
 
-#validate_args() {
-#   [ -n $PEER_PUBKEY ] && abnormal_exit "missing required argument -pk|--peer-pubkey" usage
-#}
+validate_args() {
+   if [ $ADD_PEER -eq 1 ]; then 
+      [ ! $PEER_IP ] && abnormal_exit "missing required argument --peer-ip" usage
+      [ ! $PEER_PUBKEY ] && abnormal_exit "missing required argument -pk|--peer-pubkey" usage
+   fi
+}
 
 check_conn() {
    printf "Checking for existing connections ..."
@@ -122,19 +129,9 @@ create_connection() {
 }
 
 add_peer() {
-   local tunnel_subnet=$(echo $TUNNEL_IP | grep -oP "^\d{1,3}\.\d{1,3}\.\d{1,3}\.")
-   local subnet_length=${#tunnel_subnet}
-   local host=${TUNNEL_IP:subnet_length:5}
-
-   if [ $host -le 253 ]; then
-      local peer_ip="$tunnel_subnet$(expr $host + 1)"
-   else
-      abnormal_exit "host address out of range"
-   fi
-
 cat << EOF >> /etc/NetworkManager/system-connections/$CONN_NAME.nmconnection
 [wireguard-peer.$PEER_PUBKEY]
-allowed-ips=$peer_ip;
+allowed-ips=$PEER_IP;
 EOF
 
    printf "Done\n"
@@ -144,7 +141,10 @@ main() {
    parse_args $@
 
    if [ $ADD_PEER -eq 1 ]; then
+      validate_args
       add_peer
+      nmcli connection load /etc/NetworkManager/system-connections/$CONN_NAME.nmconnection
+      nmcli connection up $CONN_NAME
       exit 0
    fi
    
