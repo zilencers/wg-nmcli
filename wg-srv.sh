@@ -137,6 +137,12 @@ EOF
    printf "Done\n"
 }
 
+add_firewall_rules() {
+   firewall-cmd --permanent --add-port=51820/udp --zone=public
+   firewall-cmd --permanent --zone=public --add-masquerade
+   firewall-cmd --reload
+}
+
 main() {
    parse_args $@
 
@@ -152,6 +158,7 @@ main() {
    install_pkg
    genkeys
    create_connection
+   add_firewall_rules
 }
 
 main $@
