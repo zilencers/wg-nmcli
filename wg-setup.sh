@@ -13,7 +13,7 @@ usage() {
    echo " -c|--conn-name      network manager connection name; Default: wg0-[client|server]"
    echo " -e|--endpoint       sets the hostname or IP address of the server"
    echo " -g|--gateway        gateway IP; use server tunnel ip as gateway"
-   echo "-ip|--tunnel-ip      server tunnel ip in CIDR notation"
+   echo "-ip|--tunnel-ip      client or server tunnel ip in CIDR notation"
    echo " -p|--port           port the server should listen on; Default: 51820"
    echo "-pk|--peer-pubkey    peer public key"
    echo " -r|--route-all      route all traffic through tunnel; Only valid for client"
@@ -140,7 +140,6 @@ genkeys() {
 create_connection() {
    printf "Adding NetworkManager WireGuard connection profile ...\n"
    nmcli connection add type wireguard con-name $CONN_NAME ifname $VIRT_IFNAME autoconnect no
-   printf "Done\n"
 
    # "Set the tunnel IPv4 address and subnet mask ..."
    nmcli connection modify $CONN_NAME ipv4.method manual ipv4.addresses $TUNNEL_IP
@@ -212,6 +211,8 @@ main() {
    genkeys
    create_connection
    add_firewall_rules
+
+   wg show wg0
 }
 
 main $@
