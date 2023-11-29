@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ADD_PEER=0
+GENKEY=0
 AUTOCONNECT="yes"
 
 usage() {
@@ -13,6 +14,7 @@ usage() {
    echo " -c|--conn-name      network manager connection name; Default: wg0-[client|server]"
    echo " -e|--endpoint       sets the hostname or IP address of the server"
    echo " -g|--gateway        gateway IP; use server tunnel ip as gateway"
+   echo "    --genkey         generate public and private keys only"
    echo "-ip|--tunnel-ip      client or server tunnel ip in CIDR notation"
    echo " -p|--port           port the server should listen on; Default: 51820"
    echo "-pk|--peer-pubkey    peer public key"
@@ -58,33 +60,37 @@ parse_args() {
 	     GATEWAY=$2
 	     shift 2
 	     ;;
+	  --genkey)
+	     GENKEY=1
+	     shift 1
+	     ;;
          -ip|--tunnel-ip)
-	    TUNNEL_IP=$2
-	    shift 2
-	    ;;
+	     TUNNEL_IP=$2
+	     shift 2
+	     ;;
 	  -p|--port)
-	    PORT=$2
-	    shift 2
-	    ;;
+	     PORT=$2
+	     shift 2
+	     ;;
 	 -pk|--peer-pubkey)
-	    PEER_PUBKEY=$2
-	    shift 2
-	    ;;
+	     PEER_PUBKEY=$2
+	     shift 2
+	     ;;
 	  -r|--route-all)
-	    ROUTE_ALL="0.0.0.0/0;"
-	    shift 1
-	    ;;
+	     ROUTE_ALL="0.0.0.0/0;"
+	     shift 1
+	     ;;
 	  -t|--type)
-	    TYPE=$2
-	    shift 2
-	    ;;
+	     TYPE=$2
+	     shift 2
+	     ;;
 	  -v|--virt-ifname)
-	    VIRT_IFNAME=$2
-	    shift 2
-	    ;;
+	     VIRT_IFNAME=$2
+	     shift 2
+	     ;;
 	  -h|--help)
-            usage
-	    ;;
+             usage
+	     ;;
       esac
    done
 }
@@ -132,11 +138,16 @@ install_pkg() {
 
 genkeys() {
    printf "Generating keys ..."
-   
    umask 077; wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
-   PRIVATE_KEY=$(cat /etc/wireguard/privatekey)
-   
    printf "Done\n"
+}
+
+get_keys() {
+   [ ! -f "/etc/wireguard/privatekey" ] && abnormal_exit "private key not found"
+   [ ! -f "/etc/wireguard/publickey" ] && abnormal_exit "public key not found"
+
+   PRIVATE_KEY=$(cat /etc/wireguard/privatekey)
+   PUBLIC_KEY=$(cat /etc/wireguard/publickey)
 }
 
 create_connection() {
@@ -207,10 +218,17 @@ main() {
       nmcli connection up $CONN_NAME
       exit 0
    fi
-   
+  
+   if [ $GENKEY -eq 1 ]; then
+      genkeys
+      get_keys
+      echo "Public Key: $PUBLIC_KEY"
+      exit 0
+   fi 
+
    check_conn
    install_pkg
-   genkeys
+   get_keys
    create_connection
    add_firewall_rules
 
