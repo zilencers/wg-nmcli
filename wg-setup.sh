@@ -137,9 +137,20 @@ install_pkg() {
 }
 
 genkeys() {
-   printf "Generating keys ..."
-   umask 077; wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
-   printf "Done\n"
+   local found=0
+
+   if [ -f "/etc/wireguard/privatekey" ] || [ -f "/etc/wireguard/publickey" ]; then
+      printf "Wireguard encryption keys were found. Overwrite? (y/N): "
+      found=1
+      local _answer
+      read _answer
+   fi
+
+   if [[ $_answer = "y" ]] || [[ $found -eq 0 ]]; then
+      printf "Generating keys ..."
+      umask 077; wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
+      printf "Done\n"
+   fi
 }
 
 get_keys() {
@@ -220,6 +231,7 @@ main() {
    fi
   
    if [ $GENKEY -eq 1 ]; then
+      install_pkg
       genkeys
       get_keys
       echo "Public Key: $PUBLIC_KEY"
