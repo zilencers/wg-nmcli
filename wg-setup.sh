@@ -127,7 +127,7 @@ validate_args() {
    fi 
 
    if [ "$TYPE" = "client" ]; then
-      [ -n $ENDPOINT ] && abnormal_exit "missing required argument -e|--endpoint" usage
+      [ ! $ENDPOINT ] && abnormal_exit "missing required argument -e|--endpoint" usage
    fi 
 }
 
@@ -216,8 +216,8 @@ add_peer() {
       "client")
          echo "[wireguard-peer.$PEER_PUBKEY]" >> $config
          echo "endpoint=$ENDPOINT:$PORT" >> $config
-         [ -n $ROUTE_ALL ] && echo "allowed-ips=$ROUTE_ALL" >> $config
-         [ -n $ALLOWED_IP ] && echo "allowed-ips=$ALLOWED_IP" >> $config
+         [ -n "$ROUTE_ALL" ] && echo "allowed-ips=$ROUTE_ALL" >> $config
+         [ -n "$ALLOWED_IP" ] && echo "allowed-ips=$ALLOWED_IP" >> $config
          echo "persistent-keepalive=20" >> $config
 	 ;;
       "server")
@@ -272,16 +272,18 @@ get_network() {
 }
 
 add_firewall_rules() {
-   local _src_addr
-   get_network _src_addr
+   if [ $TYPE = "server" ]; then
+      local _src_addr
+      get_network _src_addr
 
-   firewall-cmd --permanent --add-port="$PORT/udp" --zone=public
-   firewall-cmd --permanent --zone=internal --add-interface=$VIRT_IFNAME
+      firewall-cmd --permanent --add-port="$PORT/udp" --zone=public
+      firewall-cmd --permanent --zone=internal --add-interface=$VIRT_IFNAME
 
-   [ $IPV4_FORWARD -eq 1 ] &&
-         firewall-cmd --zone=public --add-rich-rule="rule family=\"ipv4\" source address=\"$_src_addr\" masquerade" --permanent
+      [ $IPV4_FORWARD -eq 1 ] &&
+            firewall-cmd --zone=public --add-rich-rule="rule family=\"ipv4\" source address=\"$_src_addr\" masquerade" --permanent
       
-   firewall-cmd --reload
+      firewall-cmd --reload
+   fi
 }
 
 main() {
